@@ -13,20 +13,21 @@ on:
 jobs:
   backup:
     runs-on: ubuntu-latest
+    env:
+      CONFIGURED: ${{ secrets.SUPABASE_DB_URL != '' && secrets.BACKUP_PASSPHRASE != '' }}
     steps:
       - name: Check secrets
-        env:
-          DB: ${{ secrets.SUPABASE_DB_URL }}
-          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
-        run: |
-          if [ -z "$DB" ] || [ -z "$PASS" ]; then echo "Backup secrets are not configured"; exit 1; fi
+        if: env.CONFIGURED != 'true'
+        run: echo "::notice::Backup skipped — add SUPABASE_DB_URL and BACKUP_PASSPHRASE secrets to enable it"
       - name: Install PostgreSQL 17 client
+        if: env.CONFIGURED == 'true'
         run: |
           sudo install -d /usr/share/postgresql-common/pgdg
           sudo curl -fsSo /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
           echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
           sudo apt-get update -q && sudo apt-get install -yq postgresql-client-17
       - name: Dump and encrypt
+        if: env.CONFIGURED == 'true'
         env:
           DB: ${{ secrets.SUPABASE_DB_URL }}
           PASS: ${{ secrets.BACKUP_PASSPHRASE }}
@@ -35,6 +36,7 @@ jobs:
             | gzip | gpg --batch --yes --pinentry-mode loopback --passphrase "$PASS" --symmetric --cipher-algo AES256 \
             -o "naya-$(date -u +%Y-%m-%d).sql.gz.gpg"
       - uses: actions/upload-artifact@v4
+        if: env.CONFIGURED == 'true'
         with:
           name: naya-backup
           path: naya-*.sql.gz.gpg

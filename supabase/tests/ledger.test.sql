@@ -25,8 +25,8 @@ select ok(public.is_owner(), 'owner linked by e-mail');
 
 -- ---------------------------------------------------------------- start: money and stock
 select lives_ok($$ select public.set_opening_money(gen_random_uuid(), now() - interval '1 hour',
-  jsonb_build_object(pg_temp.id('kaspi'), 26446, pg_temp.id('cash'), 41000)) $$, 'opening money');
-select is((select sum(balance) from public.v_balances), 67446::numeric, 'all money 67 446');
+  jsonb_build_object(pg_temp.id('kaspi'), 20000, pg_temp.id('cash'), 30000)) $$, 'opening money');
+select is((select sum(balance) from public.v_balances), 50000::numeric, 'all money 50 000');
 
 select lives_ok($$ select public.record_inventory(gen_random_uuid(), jsonb_build_object('is_opening', true, 'lines', jsonb_build_array(
   jsonb_build_object('product_id', pg_temp.id('heart'), 'counted', 44, 'unit_cost', 75),
@@ -54,7 +54,7 @@ select is((select payment_status from public.v_orders where id = pg_temp.id('o1'
 select is((select helium_l_per_unit from public.order_lines where order_id = pg_temp.id('o1') and product_id = pg_temp.id('giant')), 60.00, 'giant gets the default estimate norm');
 select is((select helium_source from public.order_lines where order_id = pg_temp.id('o1') and product_id = pg_temp.id('heart')), 'estimate', 'heart norm: owners estimate beats cheatsheet');
 select is((select ribbon_m from public.order_lines where order_id = pg_temp.id('o1') and product_id = pg_temp.id('giant')), 1.5, 'ribbon norm filled in');
-select is((select balance from public.v_balances where account_id = pg_temp.id('cash')), 46000::numeric, 'prepayment changes money at once');
+select is((select balance from public.v_balances where account_id = pg_temp.id('cash')), 35000::numeric, 'prepayment changes money at once');
 select is((select coalesce(sum(amount), 0) from public.v_revenue_items), 0::numeric, 'prepayment is not revenue');
 
 -- repeat of the same request returns the first result and creates nothing new
@@ -106,7 +106,7 @@ select is((select amount from public.owner_flows where kind = 'personal' and own
 
 select lives_ok($$ select public.record_transfer(gen_random_uuid(), pg_temp.id('kaspi'), pg_temp.id('cash'), 6000) $$, 'transfer');
 select is((select sum(balance) from public.v_balances),
-          67446 + 5000 + 13000 - 1250 - 500 - 1400 - 5620::numeric, 'transfer keeps total money');
+          50000 + 5000 + 13000 - 1250 - 500 - 1400 - 5620::numeric, 'transfer keeps total money');
 
 -- report: revenue 18 000, opex 1 400 only (print is in cost, personal is not an expense)
 select is((public.report_summary(current_date - 1, current_date + 1)->>'revenue')::numeric, 18000::numeric, 'revenue on issue');

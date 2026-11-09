@@ -53,7 +53,7 @@ PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -f supaba
    ```bash
    uv run scripts/import_sheet.py --xlsx "NAYA BALLOONS — финансовая и складская система.xlsx" \
      --owner "Назарбек=<почта>" --owner "Аянат=<почта>" \
-     --launch 2026-11-10 --opening "Kaspi=26446" --opening "Наличные=41000"
+     --launch 2026-11-10 --opening "Kaspi=<сумма>" --opening "Наличные=<сумма>"
    psql "$DB_URL" -f private/import.sql
    ```
    В конце скрипт сверяет контрольные суммы: 11 заказов из Excel, 152 640 ₸ выручки, 67 279 ₸ материалов, 500 ₸ прочих расходов, продажи из Google Sheets, деньги на старте. Если хоть что-то не сходится, импорт отменяется целиком.

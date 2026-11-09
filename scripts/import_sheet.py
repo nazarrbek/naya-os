@@ -14,7 +14,7 @@ does not match.
 Usage:
   uv run scripts/import_sheet.py --xlsx "path/to/file.xlsx" \
       --owner "Назарбек=<email>" --owner "Аянат=<email>" \
-      --launch 2026-11-10 --opening "Kaspi=26446" --opening "Наличные=41000"
+      --launch 2026-11-10 --opening "Kaspi=<сумма>" --opening "Наличные=<сумма>"
 """
 from __future__ import annotations
 
