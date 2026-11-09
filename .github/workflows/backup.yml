@@ -1,0 +1,41 @@
+name: Nightly backup
+
+# Dumps the production database every night, encrypts it and keeps it as a workflow artifact for 30 days.
+# The repository is public, so the dump is encrypted with BACKUP_PASSPHRASE before upload.
+# Secrets: SUPABASE_DB_URL (Supabase → Connect → Session pooler URI), BACKUP_PASSPHRASE.
+# Restore: gpg -d backup.sql.gz.gpg | gunzip | psql "$DATABASE_URL"
+
+on:
+  schedule:
+    - cron: '0 21 * * *' # 02:00 Asia/Almaty
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check secrets
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$DB" ] || [ -z "$PASS" ]; then echo "Backup secrets are not configured"; exit 1; fi
+      - name: Install PostgreSQL 17 client
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSo /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -q && sudo apt-get install -yq postgresql-client-17
+      - name: Dump and encrypt
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          /usr/lib/postgresql/17/bin/pg_dump "$DB" --schema=public --schema=auth --no-owner --no-privileges \
+            | gzip | gpg --batch --yes --pinentry-mode loopback --passphrase "$PASS" --symmetric --cipher-algo AES256 \
+            -o "naya-$(date -u +%Y-%m-%d).sql.gz.gpg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: naya-backup
+          path: naya-*.sql.gz.gpg
+          retention-days: 30
