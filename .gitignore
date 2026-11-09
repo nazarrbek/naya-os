@@ -1,0 +1,11 @@
+private/
+node_modules/
+dist/
+.env
+.env.local
+*.local
+supabase/.temp/
+supabase/.branches/
+.hoplite/
+.context/
+*.tsbuildinfo
